@@ -1,4 +1,5 @@
 # app/views.py
+from django.http import HttpResponse
 from django.contrib.auth import get_user_model, authenticate, login
 from django.shortcuts import render, redirect
 from .forms import UserLoginForm, UserSignupForm, AccountUpdateForm, AddressUpdateForm
@@ -8,9 +9,13 @@ from django.contrib import messages
 
 User = get_user_model()
 
+def index(request):
+    context = {}
+    return render(request, "index.html", context)
+
 class UserLoginView(View):
     form_class = UserLoginForm
-    template_name = 'accounts/login.html'
+    template_name = 'business-manager/login.html'
 
     def dispatch(self, request, *args, **kwargs):
         if request.user.is_authenticated:
@@ -49,7 +54,7 @@ def email_verification(request, token):
 
 class UserSignupView(View):
     form_class = UserSignupForm
-    template_name = 'accounts/signup.html'
+    template_name = 'business-manager/signup.html'
 
     def get(self, request):
         form = self.form_class()
@@ -66,7 +71,7 @@ class UserSignupView(View):
 class AccountUpdateView(View):
     account_form_class = AccountUpdateForm
     address_form_class = AddressUpdateForm
-    template_name = 'accounts/update_account.html'
+    template_name = 'business-manager/update_account.html'
 
     def get(self, request, id):
         account = Account.objects.get(pk=id)

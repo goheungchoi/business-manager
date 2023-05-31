@@ -31,13 +31,15 @@ class AddressInput(graphene.InputObjectType):
   street = graphene.String()
   city = graphene.String()
   state = graphene.String()
-  zip_code = graphene.String()
   country = graphene.String()
+  zip_code = graphene.String()
 
 
 class UserInput(graphene.InputObjectType):
-  name = graphene.String()
+  first_name = graphene.String()
+  last_name = graphene.String()
   username = graphene.String()
+  password = graphene.String()
   department = graphene.String()
   title = graphene.String()
   role = graphene.String()
@@ -47,27 +49,30 @@ class UserInput(graphene.InputObjectType):
   mobile = graphene.String()
   home_phone = graphene.String()
   manager = graphene.ID()
-  password = graphene.String()
+  password_reset_attempt = graphene.Int()
+  password_reset_lockout_date = graphene.DateTime()
+  
 
 
 class AccountInput(graphene.InputObjectType):
-  name = graphene.String()
-  id = graphene.String()
+  first_name = graphene.String()
+  last_name = graphene.String()
   billing_address = graphene.ID()
   phone = graphene.String()
-  active = graphene.Boolean()
+  is_active = graphene.Boolean()
   type = graphene.String()
 
 
 class ContactInput(graphene.InputObjectType):
   account = graphene.ID(required=True)
+  first_name = graphene.String()
+  last_name = graphene.String()
   birthdate = graphene.Date()
   email = graphene.String()
   email_opt_out = graphene.Boolean()
   home_phone = graphene.String()
   mailing_address = graphene.ID()
   mobile = graphene.String()
-  name = graphene.String()
 
 
 class CreateAddress(graphene.Mutation):
@@ -132,12 +137,23 @@ class CreateContact(graphene.Mutation):
 
 
 class Query(graphene.ObjectType):
-  users = graphene.List(UserType)
+  users = graphene.List(UserType, role=graphene.String())
   accounts = graphene.List(AccountType)
   contacts = graphene.List(ContactType)
 
-  def resolve_users(root, info):
-    return User.objects.all()
+  user = graphene.Field(UserType, id=graphene.ID())
+
+  def resolve_user(root, info, role=None):
+    try:
+      return User.objects.get(pk=id)
+    except User.DoesNotExist:
+      return None
+
+  def resolve_users(root, info, role=None):
+    if role is not None:
+      return User.objects.filter(role=role)
+    else:
+      return User.objects.all()
 
   def resolve_accounts(root, info):
     return Account.objects.all()
@@ -145,7 +161,7 @@ class Query(graphene.ObjectType):
   def resolve_contacts(root, info):
     return Contact.objects.all()
 
-  address = graphene.Field(AddressType, id=graphene.String())
+  address = graphene.Field(AddressType, id=graphene.ID())
 
   def resolve_address(root, info, id):
     try:

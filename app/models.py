@@ -14,13 +14,14 @@ class Address(models.Model):
 
 class User(AbstractBaseUser):
   ROLE_CHOICES = [
-    ('MANAGR', 'Manager'),
+    ('MANAGER', 'Manager'),
     ('EMPLOYEE', 'Employee'),
     ('ADMIN', 'Admin'),
     ('OTHER', 'Other'),
   ]
-  name = models.CharField(max_length=255)
-  username = models.CharField(max_length=80)
+  first_name = models.CharField(max_length=150, default='')
+  last_name = models.CharField(max_length=150, default='')
+  username = models.CharField(max_length=80, unique=True)
   department = models.CharField(max_length=80)
   title = models.CharField(max_length=80)
   role = models.CharField(choices=ROLE_CHOICES, max_length=20, default='OTHER')
@@ -32,9 +33,13 @@ class User(AbstractBaseUser):
   manager = models.ForeignKey('self', on_delete=models.SET_NULL, null=True, blank=True)
   password_reset_attempt = models.PositiveSmallIntegerField(default=0)
   password_reset_lockout_date = models.DateTimeField(null=True, blank=True)
-  USERNAME_FIELD = "id"
+  USERNAME_FIELD = "username"
   EMAIL_FIELD = "email"
-  REQUIRED_FIELDS = ["name", "username", "email", "phone"]
+  REQUIRED_FIELDS = ["first_name", 
+                     "last_name", 
+                     "username", 
+                     "email", 
+                     "phone"]
 
 class Account(models.Model):
   ACCOUNT_TYPE_CHOICES = [
@@ -43,19 +48,21 @@ class Account(models.Model):
     ('CUSTOMER', 'Customer'),
     ('OTHER', 'Other'),
   ]
-  name = models.CharField(max_length=255)
-  id = models.CharField(max_length=40, primary_key=True)
+  first_name = models.CharField(max_length=150, default='')
+  last_name = models.CharField(max_length=150, default='')
   billing_address = models.ForeignKey(Address, on_delete=models.CASCADE)
-  phone = models.CharField(max_length=15)
-  active = models.BooleanField(default=True)
+  phone = models.CharField(max_length=15, default='')
+  is_active = models.BooleanField(default=True)
   type = models.CharField(max_length=15, choices=ACCOUNT_TYPE_CHOICES, default='OTHER')
 
 class Contact(models.Model):
   account = models.ForeignKey(Account, on_delete=models.CASCADE)
+  first_name = models.CharField(max_length=150, default='')
+  last_name = models.CharField(max_length=150, default='')
   birthdate = models.DateField()
   email = models.EmailField()
   email_opt_out = models.BooleanField(default=False)
-  home_phone = models.CharField(max_length=15)
+  home_phone = models.CharField(max_length=15, default='')
   mailing_address = models.ForeignKey(Address, on_delete=models.CASCADE)
-  mobile = models.CharField(max_length=15)
-  name = models.CharField(max_length=255)
+  mobile = models.CharField(max_length=15, default='')
+  
