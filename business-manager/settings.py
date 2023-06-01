@@ -1,4 +1,7 @@
 # business-manager/settings.py
+import os
+
+DEBUG = True
 
 INSTALLED_APPS = [
   "django.contrib.admin",
@@ -10,7 +13,8 @@ INSTALLED_APPS = [
   
   "app.apps.AppConfig",
 
-  "graphene_django"
+  "graphene_django",
+  "corsheaders",
 ]
 
 DATABASES = {
@@ -30,6 +34,8 @@ GRAPHENE = {
 
 MIDDLEWARE = [
   "django.middleware.security.SecurityMiddleware",
+  'corsheaders.middleware.CorsMiddleware',
+  'whitenoise.middleware.WhiteNoiseMiddleware',
   "django.contrib.sessions.middleware.SessionMiddleware",
   "django.middleware.common.CommonMiddleware",
   "django.middleware.csrf.CsrfViewMiddleware",
@@ -38,10 +44,17 @@ MIDDLEWARE = [
   "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
 
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+STATIC_URL = '/static/'
+STATIC_ROOT = os.path.join(BASE_DIR, 'static')
+STATICFILES_DIRS = [os.path.join(BASE_DIR, 'client', 'build'),
+                    os.path.join(BASE_DIR, 'client', 'build', 'static')]
+
 TEMPLATES = [
   {
     "BACKEND": "django.template.backends.django.DjangoTemplates",
-    "DIRS": [],
+    "DIRS": [os.path.join(BASE_DIR, 'templates', 'business-manager')],
     "APP_DIRS": True,
     "OPTIONS": {
       "context_processors": [
@@ -54,8 +67,16 @@ TEMPLATES = [
   },
 ]
 
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:3000",
+]
 ALLOWED_HOSTS = ["localhost", "127.0.0.1"]
 ROOT_URLCONF = "business-manager.urls"
-AUTHENTICATION_BACKENDS = ["business-manager.backends.EmailVerificationBackend"]
+AUTHENTICATION_BACKENDS = ["django.contrib.auth.backends.ModelBackend", 
+                           "app.backends.EmailVerificationBackend"]
 
 SECRET_KEY = 'a3jg7sdjkgf7^&sdjhg8237sd87f6sdf^&sdf7s6d8f7sdf^&'
+
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+
+
