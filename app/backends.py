@@ -1,5 +1,7 @@
 # app/backends.py
-from django.contrib.auth import get_user_model
+from .models import User
+from .crypto import create_token
+from django.conf import settings
 from django.core.mail import send_mail
 from django.urls import reverse
 from uuid import uuid4
@@ -8,29 +10,36 @@ from django.contrib.auth.base_user import AbstractBaseUser
 from django.contrib.auth.hashers import check_password
 from django.http.request import HttpRequest
 
+from django.conf import settings
+
 class EmailVerificationBackend(ModelBackend):
   def authenticate(self, request: HttpRequest, username=None, password=None, **kwargs):
-    User = get_user_model()
+    print("backend auth method is passed")
+    #User = get_user_model()
     try:
       user = User.objects.get(username=username)
-      if user and user.check_password(password):
+      if user and check_password(password, user.password):
         # User credentials are correct, now we generate and store the token
-        token = uuid4()
-        request.session['auth_token'] = str(token)
-        request.session['auth_user_id'] = user.pk
+        token = create_token(user.pk, settings.SECRET_KEY)
 
         # Send the token to the user's email
-        verification_url = request.build_absolute_uri(reverse('email_verification', args=[token]))
+        print(f'start sending an email')
+        #verification_url = request.build_absolute_uri(reverse('email_verification', args=[token]))
+        verification_url = f"http://localhost:3000/email_verification/{token}"
         send_mail(
-            'Verify your login',
-            f'Click the link to log in: {verification_url}',
-            'from@example.com',
-            [user.email],
+            subject='Verify your login',
+            message=f'Click the link to log in: {verification_url}',
+            from_email=settings.EMAIL_HOST_USER,
+            recipient_list=[user.email],
         )
+        print('email sent')
 
-        return None 
+        return user
       else:
         return None
     except User.DoesNotExist:
       return None
+    except Exception as e:
+        print(f"Unexpected error: {str(e)}")
+        return None
             

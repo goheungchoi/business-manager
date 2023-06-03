@@ -1,11 +1,14 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 
 import { 
   BrowserRouter as Router,
   Routes,
   Route,
   Link,
+  useParams,
 } from 'react-router-dom'
+
+import axios from 'axios'
 
 import LogInForm from './components/LogInForm';
 import CreateUserForm from './components/CreateUserForm';
@@ -63,6 +66,36 @@ function NoMatch() {
   );
 }
 
+function EmailVerification() {
+  const { token } = useParams();
+  const [verificationStatus, setVerificationStatus] = useState(null);
+
+  useEffect(() => {
+    axios.get('http://localhost:8000/api/email_verification/' + token)
+    .then(response => {
+      if (response.status == 200) {
+        localStorage.setItem('access', response.data.access);
+        localStorage.setItem('refresh', response.data.refresh);
+        setVerificationStatus('success');
+      } else {
+        setVerificationStatus('failure');
+      }
+    })
+    .catch(error => {
+      console.error('Error:', error);
+      setVerificationStatus('failure');
+    });
+  }, [token]);
+
+  return (
+    <div>
+      {verificationStatus === 'success' && <p>Verification successful! Your email address has been verified.</p>}
+      {verificationStatus === 'failure' && <p>Verification failed. Please try again or contact support.</p>}
+      {!verificationStatus && <p>Verifying your email...</p>}
+    </div>
+  )
+}
+
 function App() {
   return (
     <Router>
@@ -70,6 +103,7 @@ function App() {
         <Route path="/" element={<Home />} />
         <Route path="/about" element={<About />} />
         <Route path="/login" element={<LogInForm />} />
+        <Route path="/email_verification/:token/" element={<EmailVerification />} />
         <Route path="/signup" element={<CreateUserForm />} />
         <Route path="/user/:id" element={<UserView />} />
         

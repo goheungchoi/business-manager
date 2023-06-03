@@ -1,11 +1,18 @@
 # app/views.py
-from django.http import HttpResponse
+# this is for traditional django templates
+# therefore, this views are not compatible with React UI
+from django.http import JsonResponse
+from .crypto import decode_token
+from django.conf import settings
 from django.contrib.auth import get_user_model, authenticate, login
 from django.shortcuts import render, redirect
 from .forms import UserLoginForm, UserSignupForm, AccountUpdateForm, AddressUpdateForm
 from .models import User, Account, Address
 from django.views import View
 from django.contrib import messages
+
+from rest_framework_simplejwt.tokens import RefreshToken
+
 
 User = get_user_model()
 
@@ -38,19 +45,28 @@ class UserLoginView(View):
         return render(request, self.template_name, {'form': form})
 
 def email_verification(request, token):
-    auth_token = request.session.get('auth_token')
-    auth_user_id = request.session.get('auth_user_id')
-    if auth_token == token and auth_user_id is not None:
-        # The token is correct and we have a user ID, let's log the user in
-        User = get_user_model()
-        user = User.objects.get(pk=auth_user_id)
-        login(request, user)
-        messages.success(request, 'Verification Succeeded', 'success')
-        return redirect('core:home')
-    else:
-        # The token was incorrect or we don't have a user ID, show an error page
-        messages.error(request, 'Verification failed', 'danger')
-        return redirect('core:login')
+    try:
+        payload = decode_token(token, settings.SECRET_KEY)
+        user_id = payload['user_id']
+    except:
+        return JsonResponse({'status': 'error', 'message': 'Invalid or expired token.'}, status=400)
+    
+    # The token is correct and we have a user ID
+    User = get_user_model()
+    try:
+        user = User.objects.get(pk=user_id)
+    except User.DoesNotExist:
+        return JsonResponse({
+            'status': 'error', 
+            'message': 'Invalid user ID'}, status=400)
+
+    refresh = RefreshToken.for_user(user)
+    login(request, user)
+    return JsonResponse({
+        'status': 'success', 
+        'message': 'Verification Succeeded', 
+        'access' : str(refresh.access_token),
+        'refresh': str(refresh)}, status=200)
 
 class UserSignupView(View):
     form_class = UserSignupForm

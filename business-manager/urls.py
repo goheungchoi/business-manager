@@ -8,6 +8,7 @@ from django.conf.urls.static import static
 from app.views import index, UserLoginView, UserSignupView, AccountUpdateView, email_verification
 from graphene_django.views import GraphQLView
 from app.schema import schema
+from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
 app_name = 'business-manager'
 
@@ -19,5 +20,7 @@ urlpatterns = [
   path('api/signup/', UserSignupView.as_view(), name='signup'),
   path('api/update_account/<int:id>/', AccountUpdateView.as_view(), name='update_account'),
   path('api/email_verification/<uuid:token>/', email_verification, name='email_verification'),
+  path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
+  path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
   re_path(r'^.*', TemplateView.as_view(template_name='index.html')),
 ] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)

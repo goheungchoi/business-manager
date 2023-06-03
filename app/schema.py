@@ -136,6 +136,37 @@ class CreateContact(graphene.Mutation):
     return CreateContact(contact=contact, ok=True)
 
 
+class Login(graphene.Mutation):
+  class Arguments:
+    username = graphene.String(required=True)
+    password = graphene.String(required=True)
+
+  user = graphene.Field(UserType)
+  token = graphene.String()
+  error_message = graphene.String()
+  access = graphene.String()
+  refresh = graphene.String()
+
+  @staticmethod
+  def mutate(root, info, username, password):
+    print("mutation started")
+    user = authenticate(info.context, username=username, password=password)
+    print("authenticated")
+    if user is not None:
+      print(f'auth_result read')
+      return Login(user=user, error_message=None)
+    else:
+      return Login(user=None, error_message="Invalid username or password.")
+
+
+class Mutation(graphene.ObjectType):
+  login = Login.Field()
+  create_user = CreateUser.Field()
+  create_address = CreateAddress.Field()
+  create_account = CreateAccount.Field()
+  create_contact = CreateContact.Field()
+
+
 class Query(graphene.ObjectType):
   users = graphene.List(UserType, role=graphene.String())
   accounts = graphene.List(AccountType)
@@ -143,7 +174,7 @@ class Query(graphene.ObjectType):
 
   user = graphene.Field(UserType, id=graphene.ID())
 
-  def resolve_user(root, info, role=None):
+  def resolve_user(root, info, id=id):
     try:
       return User.objects.get(pk=id)
     except User.DoesNotExist:
@@ -168,31 +199,6 @@ class Query(graphene.ObjectType):
       return Address.objects.get(pk=id)
     except Address.DoesNotExist:
       return None
-
-
-class Login(graphene.Mutation):
-  class Arguments:
-    username = graphene.String(required=True)
-    password = graphene.String(required=True)
-
-  user = graphene.Field(UserType)
-
-  @staticmethod
-  def mutate(root, info, username, password):
-    user = authenticate(username=username, password=password)
-    if user is not None:
-      login(info.context, user)
-      return Login(user=user)
-    else:
-      raise Exception("Invalid username or password.")
-
-
-class Mutation(graphene.ObjectType):
-  login = Login.Field()
-  create_user = CreateUser.Field()
-  create_address = CreateAddress.Field()
-  create_account = CreateAccount.Field()
-  create_contact = CreateContact.Field()
 
 
 schema = graphene.Schema(query=Query, mutation=Mutation)

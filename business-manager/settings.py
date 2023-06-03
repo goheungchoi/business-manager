@@ -1,5 +1,9 @@
 # business-manager/settings.py
 import os
+import environ  # hide credential info
+
+env = environ.Env()
+environ.Env.read_env()
 
 DEBUG = True
 
@@ -15,7 +19,14 @@ INSTALLED_APPS = [
 
   "graphene_django",
   "corsheaders",
+  'rest_framework_simplejwt',
 ]
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    )
+}
 
 DATABASES = {
   'default': {
@@ -27,6 +38,15 @@ DATABASES = {
     'PORT': '5432', 
   }
 }
+
+# SMTP settings (Email Sending Protocol)
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = env('EMAIL_HOST')
+EMAIL_USE_TLS = True
+EMAIL_PORT = 587
+EMAIL_HOST_USER = env('EMAIL_HOST_USER')
+EMAIL_HOST_PASSWORD = env('EMAIL_HOST_PASSWORD')
+
 
 GRAPHENE = {
   'SCHEMA': 'app.schema.schema', 
@@ -67,13 +87,17 @@ TEMPLATES = [
   },
 ]
 
+CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
 ]
+CORS_ALLOW_HEADERS = [
+    "withcredentials",
+]
+
 ALLOWED_HOSTS = ["localhost", "127.0.0.1"]
 ROOT_URLCONF = "business-manager.urls"
-AUTHENTICATION_BACKENDS = ["django.contrib.auth.backends.ModelBackend", 
-                           "app.backends.EmailVerificationBackend"]
+AUTHENTICATION_BACKENDS = ["app.backends.EmailVerificationBackend"]
 
 SECRET_KEY = 'a3jg7sdjkgf7^&sdjhg8237sd87f6sdf^&sdf7s6d8f7sdf^&'
 

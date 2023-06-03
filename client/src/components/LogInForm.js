@@ -1,16 +1,33 @@
 import { useMutation, useQuery, gql } from "@apollo/client"
-
+import { useState, useEffect } from "react"
+import { useNavigate } from 'react-router-dom'
 
 const LOGIN_MUTATION = gql`
   mutation Login($username: String!, $password: String!) {
     login(username: $username, password: $password) {
       user {
         id
+        firstName
+        lastName
         username
+        department
+        title
+        role
+        email
+        emailSignature
+        phone
+        mobile
+        homePhone
+        manager {
+          id
+        }
+        lastLogin
       }
+      errorMessage
     }
   }
 `;
+
 
 function LoginFailedMessageWindow({ message, onDismiss }) {
   return (
@@ -32,8 +49,12 @@ function LoginFailedMessageWindow({ message, onDismiss }) {
 }
 
 function LogInForm() {
-  let input = {}
-  const [login, { error, reset }] = useMutation(LOGIN_MUTATION);
+  const [input, setInput] = useState({
+    username: "",
+    password: "",
+  })
+  const [login, { data, error, reset }] = useMutation(LOGIN_MUTATION);
+  const navigate = useNavigate();
 
   return (
     <div>
@@ -42,24 +63,38 @@ function LogInForm() {
           e.preventDefault();
           login({ variables: 
             { 
-              username: input.username.value,
-              password: input.password.value,
+              username: input.username,
+              password: input.password,
             } 
+          }).then(request => {
+            const id = request.data.login.user.id;
+            console.log(id);
+
+            localStorage.setItem('id', id)
+
+            navigate('/user/' + id);
           });
-          input.username.value = "";
-          input.password.value = "";
+
+          setInput({
+            username: "",
+            password: "",
+          });
         }}
       >
         <input
-          ref={node => {
-            input.username = node;
-          }}
+          value={input.username}
+          onChange={e=>setInput({
+            ...input,
+            username: e.target.value
+          })}
           placeholder="Username"
         />
         <input
-          ref={node => {
-            input.password = node;
-          }}
+          value={input.password}
+          onChange={e=>setInput({
+            ...input,
+            password: e.target.value
+          })}
           placeholder="Password"
           type="password"
         />
@@ -67,9 +102,9 @@ function LogInForm() {
         <button type="submit">Login</button>
       </form>
       {
-        error &&
+        (error || (data && data.login.error_message)) &&
         <LoginFailedMessageWindow
-          message={error.message}
+          message={error ? error.message : data.login.error_message}
           onDismiss={() => reset()}
         />
       }
