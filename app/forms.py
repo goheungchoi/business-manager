@@ -32,7 +32,7 @@ class AccountUpdateForm(forms.ModelForm):
               'billing_address',
               'phone', 
               'is_active', 
-              'type']  # and other fields you need
+              'type']  
 
 class AddressUpdateForm(forms.ModelForm):
   class Meta:
